@@ -1,3 +1,6 @@
 !!com.github.edenlia.shadertoyeditor.model.ShadertoyProjectConfig
-projects: [
-  ]
+projects:
+- name: Gears
+  path: shaders/gears
+- name: test
+  path: shaders/test
