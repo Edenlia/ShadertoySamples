@@ -22,9 +22,60 @@ float sdSphere( in vec3 p, in float r )
     return length(p)-r;
 }
 
+// r: cube edge length (x,y,z)
+float sdCube( in vec3 p, in vec3 r )
+{
+    p = abs(p);
+    p = max(p-r, vec3(0.0));
+
+    return length(p);
+}
+
+// r: radius
+// l: length
+float sdCapsule( in vec3 p, in float r, in float l)
+{
+    p.y = max(abs(p.y) - (r+l), 0.0);
+    return length(p)-r;
+}
+
+// r: radius
+// t: thickness
+float sdDisk( in vec3 p, in float r, in float t)
+{
+    float dx = max(length(p.xz) - r, 0.0);
+
+    return length(vec2(dx, p.y)) - t;
+}
+
+// r: radius
+// t: thickness
+float sdDonut( in vec3 p, in float r, in float t)
+{
+    float dx = abs(length(p.xz) - r);
+
+    return length(vec2(dx, p.y)) - t;
+}
+
+// r: radius
+// t: thickness
+// * It's infinite height
+float sdRing( in vec3 p, in float r, in float t)
+{
+    return abs(length(p.xz) - r) - t;
+}
+
 vec4 map( in vec3 p, float time )
 {
-    float d = sdSphere( p, 0.2 );
+    float d = sdRing( p, 0.1, 0.01 );
+    float d1 = abs(p.y) - 0.02;
+    d = max(d, d1);
+
+    {
+        float dc = sdCube(p - vec3(0.0, 0.0, 0.1), vec3(0.02));
+        d = min(d, dc);
+    }
+
     return vec4( d, p );
 }
 
@@ -118,6 +169,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         // camera
         float an = 6.2831*time/40.0;
         vec3 ta = vec3( 0.0, 0.0, 0.0 );
+
+        // TODO: use UE coordinate: (forward, right, up) -> (+X, +Y, +Z)
         vec3 ro = ta + vec3( 0.5*cos(an), 0.3, 0.5*sin(an) );
 
         // camera-to-world transformation
