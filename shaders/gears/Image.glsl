@@ -32,11 +32,32 @@ float sdCube( in vec3 p, in vec3 r )
     return length(p);
 }
 
+float sdCube( in vec2 p, in vec2 r )
+{
+    p = abs(p);
+    p = max(p-r, vec2(0.0));
+
+    return length(p);
+}
+
+float sdCross(in vec3 p, in vec3 r)
+{
+    p = abs(p);
+
+    // https://www.youtube.com/watch?v=sl9x19EnKng 1:30:05提到 三元表达式在GPU真正运算时，大概率不会真的走branch，会通过寄存器记录flag的形式，所以跑的不慢？
+    // ？ TODO: 需要后续做做验证或了解一下真实情况
+    p.xy = (p.y > p.x) ? p.yx : p.xy;
+
+    float d1 = length(max(p-r, 0.0));
+
+    return d1;
+}
+
 // r: radius
 // l: length
 float sdCapsule( in vec3 p, in float r, in float l)
 {
-    p.y = max(abs(p.z) - (r+l), 0.0);
+    p.z = max(abs(p.z) - (r+l), 0.0);
     return length(p)-r;
 }
 
@@ -66,13 +87,19 @@ float sdRing( in vec3 p, in float r, in float t)
     return abs(length(p.xy) - r) - t;
 }
 
+// quadratic
+float smax(in float a, in float b, in float k)
+{
+    float h = max(k - abs(a-b), 0.0);
+    return max(a, b) + 0.25 / k * h * h;
+}
+
 vec4 map( in vec3 p, float time )
 {
 //    float sm = 0.01;
 
-    float d = sdRing( p, 0.24, 0.02 );
-    float d1 = abs(p.z) - 0.04;
-    d = max(d, d1);
+    float d = sdRing( p, 0.15, 0.023 );
+//    float d1 = abs(p.z) - 0.04;
 
     {
         float sectorRadian = 2 * PI / 12.0;
@@ -85,8 +112,26 @@ vec4 map( in vec3 p, float time )
         vec3 q = p;
         q.xy = rot * q.xy;
 
-        float dc = sdCube(q - vec3(0.26, 0.0, 0.0), vec3(0.08, 0.04, 0.04));
+        float dc = sdCube(q.xy - vec2(0.165, 0.0), vec2(0.042, 0.017)) - 0.01;
         d = min(d, dc);
+    }
+
+    float ds = abs(length(p)-0.5) - 0.028;
+
+    d = smax(d, ds, 0.005);
+
+    // stick
+    {
+        float d1 = sdCapsule(p, 0.01, 0.5);
+        d = min(d, d1);
+    }
+
+    // cross
+    {
+        vec3 q = p;
+        q.z = abs(q.z);
+        float d1 = sdCross(q - vec3(0.0, 0.0, 0.49), vec3(0.1, 0.005, 0.005))-0.002;
+        d = min(d, d1);
     }
 
     return vec4( d, p );
