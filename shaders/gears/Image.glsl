@@ -16,6 +16,7 @@
 //   Final : https://www.shadertoy.com/view/tt2XzG
 
 #define AA 2
+#define PI 3.1415926535
 
 float sdSphere( in vec3 p, in float r )
 {
@@ -67,12 +68,24 @@ float sdRing( in vec3 p, in float r, in float t)
 
 vec4 map( in vec3 p, float time )
 {
-    float d = sdRing( p, 0.1, 0.01 );
+//    float sm = 0.01;
+
+    float d = sdRing( p, 0.12, 0.02 );
     float d1 = abs(p.z) - 0.02;
     d = max(d, d1);
 
     {
-        float dc = sdCube(p - vec3(0.0, 0.1, 0.0), vec3(0.02));
+        float sectorRadian = 2 * PI / 12.0;
+        float sector = round(atan(p.y, p.x) / sectorRadian);
+
+        float rotRadian = sectorRadian * sector;
+        mat2 rot = mat2(cos(rotRadian), -sin(rotRadian), sin(rotRadian), cos(rotRadian)); // column major
+
+        vec3 q = p;
+        q.xy = rot * q.xy;
+
+        // rotate point back!
+        float dc = sdCube(q - vec3(0.13, 0.0, 0.0), vec3(0.04, 0.02, 0.02));
         d = min(d, dc);
     }
 
