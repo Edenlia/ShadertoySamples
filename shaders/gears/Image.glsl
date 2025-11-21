@@ -35,7 +35,7 @@ float sdCube( in vec3 p, in vec3 r )
 // l: length
 float sdCapsule( in vec3 p, in float r, in float l)
 {
-    p.y = max(abs(p.y) - (r+l), 0.0);
+    p.y = max(abs(p.z) - (r+l), 0.0);
     return length(p)-r;
 }
 
@@ -43,18 +43,18 @@ float sdCapsule( in vec3 p, in float r, in float l)
 // t: thickness
 float sdDisk( in vec3 p, in float r, in float t)
 {
-    float dx = max(length(p.xz) - r, 0.0);
+    float dx = max(length(p.xy) - r, 0.0);
 
-    return length(vec2(dx, p.y)) - t;
+    return length(vec2(dx, p.z)) - t;
 }
 
 // r: radius
 // t: thickness
 float sdDonut( in vec3 p, in float r, in float t)
 {
-    float dx = abs(length(p.xz) - r);
+    float dx = abs(length(p.xy) - r);
 
-    return length(vec2(dx, p.y)) - t;
+    return length(vec2(dx, p.z)) - t;
 }
 
 // r: radius
@@ -62,17 +62,17 @@ float sdDonut( in vec3 p, in float r, in float t)
 // * It's infinite height
 float sdRing( in vec3 p, in float r, in float t)
 {
-    return abs(length(p.xz) - r) - t;
+    return abs(length(p.xy) - r) - t;
 }
 
 vec4 map( in vec3 p, float time )
 {
     float d = sdRing( p, 0.1, 0.01 );
-    float d1 = abs(p.y) - 0.02;
+    float d1 = abs(p.z) - 0.02;
     d = max(d, d1);
 
     {
-        float dc = sdCube(p - vec3(0.0, 0.0, 0.1), vec3(0.02));
+        float dc = sdCube(p - vec3(0.0, 0.1, 0.0), vec3(0.02));
         d = min(d, dc);
     }
 
@@ -139,13 +139,14 @@ vec4 intersect( in vec3 ro, in vec3 rd, in float time )
     return res;
 }
 
+// use UE coordinate: (forward, right, up) -> (+X, +Y, +Z)
 mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
 {
-    vec3 cw = normalize(ta-ro);
-    vec3 cp = vec3(sin(cr), cos(cr),0.0);
-    vec3 cu = normalize( cross(cw,cp) );
-    vec3 cv =          ( cross(cu,cw) );
-    return mat3( cu, cv, cw );
+    vec3 forward = normalize(ta-ro); // forward
+    vec3 top = vec3(0.0, sin(cr), cos(cr)); // calculate top
+    vec3 right = normalize( cross(top,forward) );
+    vec3 up =          ( cross(forward,right) );
+    return mat3( forward, right, up );
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -168,20 +169,20 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
         // camera
         float an = 6.2831*time/40.0;
-        vec3 ta = vec3( 0.0, 0.0, 0.0 );
+        vec3 ta = vec3( 0.0, 0.0, 0.0 ); // target
 
-        // TODO: use UE coordinate: (forward, right, up) -> (+X, +Y, +Z)
-        vec3 ro = ta + vec3( 0.5*cos(an), 0.3, 0.5*sin(an) );
+        // use UE coordinate: (forward, right, up) -> (+X, +Y, +Z)
+        vec3 ro = ta + vec3( 0.5*cos(an), 0.5*sin(an), 0.3 ); // camera root
 
         // camera-to-world transformation
         mat3 ca = setCamera( ro, ta, 0.0 );
 
         // ray direction
         float fl = 2.0;
-        vec3 rd = ca * normalize( vec3(p,fl) );
+        vec3 rd = ca * normalize( vec3(fl, p) );
 
         // background
-        vec3 col = vec3(1.0+rd.y)*0.03;
+        vec3 col = vec3(1.0+rd.z)*0.03;
 
         // raymarch geometry
         vec4 tuvw = intersect( ro, rd, time );
