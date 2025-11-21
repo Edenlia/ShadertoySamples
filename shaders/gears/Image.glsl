@@ -70,8 +70,8 @@ vec4 map( in vec3 p, float time )
 {
 //    float sm = 0.01;
 
-    float d = sdRing( p, 0.12, 0.02 );
-    float d1 = abs(p.z) - 0.02;
+    float d = sdRing( p, 0.24, 0.02 );
+    float d1 = abs(p.z) - 0.04;
     d = max(d, d1);
 
     {
@@ -81,11 +81,11 @@ vec4 map( in vec3 p, float time )
         float rotRadian = sectorRadian * sector;
         mat2 rot = mat2(cos(rotRadian), -sin(rotRadian), sin(rotRadian), cos(rotRadian)); // column major
 
+        // rotate point back!
         vec3 q = p;
         q.xy = rot * q.xy;
 
-        // rotate point back!
-        float dc = sdCube(q - vec3(0.13, 0.0, 0.0), vec3(0.04, 0.02, 0.02));
+        float dc = sdCube(q - vec3(0.26, 0.0, 0.0), vec3(0.08, 0.04, 0.04));
         d = min(d, dc);
     }
 
@@ -185,7 +185,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         vec3 ta = vec3( 0.0, 0.0, 0.0 ); // target
 
         // use UE coordinate: (forward, right, up) -> (+X, +Y, +Z)
-        vec3 ro = ta + vec3( 0.5*cos(an), 0.5*sin(an), 0.3 ); // camera root
+        vec3 ro = ta + vec3( 1.5*cos(an), 1.5*sin(an), 0.6 ); // camera root
 
         // camera-to-world transformation
         mat3 ca = setCamera( ro, ta, 0.0 );
