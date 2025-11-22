@@ -18,6 +18,13 @@
 #define AA 2
 #define PI 3.1415926535
 
+float dynamic( in float t, in float minValue, in float maxValue, in float speed)
+{
+    t = t * speed;
+
+    return (sin(t) + 1.0) * 0.5 * (maxValue - minValue) + minValue;
+}
+
 float sdSphere( in vec3 p, in float r )
 {
     return length(p)-r;
@@ -94,47 +101,71 @@ float smax(in float a, in float b, in float k)
     return max(a, b) + 0.25 / k * h * h;
 }
 
-vec4 map( in vec3 p, float time )
+vec4 gear( in vec3 p, float time, float offset)
 {
-//    float sm = 0.01;
-
-    float d = sdRing( p, 0.15, 0.023 );
-//    float d1 = abs(p.z) - 0.04;
-
+    // Rotate it!
     {
-        float sectorRadian = 2 * PI / 12.0;
-        float sector = round(atan(p.y, p.x) / sectorRadian);
-
-        float rotRadian = sectorRadian * sector;
-        mat2 rot = mat2(cos(rotRadian), -sin(rotRadian), sin(rotRadian), cos(rotRadian)); // column major
-
-        // rotate point back!
-        vec3 q = p;
-        q.xy = rot * q.xy;
-
-        float dc = sdCube(q.xy - vec2(0.165, 0.0), vec2(0.042, 0.017)) - 0.01;
-        d = min(d, dc);
+        float an = 1.5 * time + offset * 6.283185/24.0;
+        an = an * sign(p.z);
+        mat2 rotMat = mat2(cos(an), -sin(an), // first column
+        sin(an), cos(an)); // second column
+        p.xy = rotMat * p.xy;
     }
 
-    float ds = abs(length(p)-0.5) - 0.028;
+    p.z = abs(p.z);
 
-    d = smax(d, ds, 0.005);
+    float sectorRadian = 2 * PI / 12.0;
+    float sector = round(atan(p.y, p.x) / sectorRadian);
+
+    float rotRadian = sectorRadian * sector;
+    mat2 rot = mat2(cos(rotRadian), -sin(rotRadian), sin(rotRadian), cos(rotRadian)); // column major
+
+    // 本质上是把空间中其他sector中的点，mapping到第一个sector中，实施相同的距离判断
+    // 可以理解为分完sector后，把sector的空间(坐标系)旋转了
+    vec3 q = p;
+    q.xy = rot * q.xy;
+
+    float d = sdCube(q.xy - vec2(0.165, 0.0), vec2(0.042, 0.017)) - 0.01;
+    float d2 = sdRing(p, 0.15, 0.023);
+    d = min(d, d2); // SDF想要合并形状，用min
+
+    float d3 = sdCross(p - vec3(0.0, 0.0, 0.5), vec3(0.18, 0.005, 0.005)) - 0.002;
+    d = min(d, d3);
+
+    float r = length(p);
+    d = smax(d, abs(r-0.5) - 0.028, 0.005);
 
     // stick
     {
-        float d1 = sdCapsule(p, 0.01, 0.5);
+        float d1 = sdCapsule(p, 0.011, 0.50);
         d = min(d, d1);
     }
 
-    // cross
     {
-        vec3 q = p;
-        q.z = abs(q.z);
-        float d1 = sdCross(q - vec3(0.0, 0.0, 0.49), vec3(0.1, 0.005, 0.005))-0.002;
-        d = min(d, d1);
+        float k = sdDonut(p - vec3(0.0, 0.0, 0.508), 0.15, 0.01);
+        d = d - min(0.0, k);
     }
+
 
     return vec4( d, p );
+}
+
+vec2 rotate45( in vec2 v )
+{
+    return vec2(v.x + v.y, v.x - v.y) * 0.7071;
+}
+
+vec4 map( in vec3 p, float time )
+{
+    vec3 q = p;
+
+    if      (abs(q.x) > abs(q.y) && abs(q.x) > abs(q.z)) q = q.zyx;
+    else if (abs(q.y) > abs(q.z))                        q = q.xzy * vec3(1,1,1);
+    else                                                 q = q.xyz * vec3(-1,1,1);
+
+    vec4 d1 = gear(q, time, 0.0);
+
+    return d1;
 }
 
 #define ZERO min(iFrame,0)

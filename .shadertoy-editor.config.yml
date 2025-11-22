@@ -1,6 +1,14 @@
 !!com.github.edenlia.shadertoyeditor.model.ShadertoyProjectConfig
 projects:
-- name: Gears
+- channel0Texture: $plugin/resources/textures/T_RustyMetal.jpg
+  channel1Texture: null
+  channel2Texture: null
+  channel3Texture: null
+  name: Gears
   path: shaders/gears
-- name: test
+- channel0Texture: null
+  channel1Texture: null
+  channel2Texture: null
+  channel3Texture: null
+  name: test
   path: shaders/test
