@@ -310,10 +310,42 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             vec3 pos = ro + tuvw.x*rd;
             vec3 nor = calcNormal(pos, time);
 
-            col = 0.5 + 0.5*nor;
+            float innerOcc = clamp(0.53 + 0.47 * dot(nor, normalize(pos)), 0.0, 1.0);
+            innerOcc = clamp(length(pos) / 0.53, 0.0, 1.0) * innerOcc;
+            float occ = calcAO(pos+nor*0.001,nor,time) * innerOcc;
+
+            vec3 te = 0.5*texture(iChannel0,tuvw.yz).xyz+
+            0.5*texture(iChannel0,tuvw.yw).xyz;
+            vec3 mate = 0.22*te;
+            vec3 f0 = mate;
+
+            col = vec3(0.0);
+            // top light
+            {
+                float diffuse = 0.5 + 0.5 * nor.z;
+                diffuse *= occ;
+                vec3 ref = reflect(rd, nor);
+                vec3 spe = vec3(1.0) * smoothstep(0.5, 0.6, ref.z);
+
+                // fresnel
+                float fre = clamp(dot(ref, nor),0.0, 1.0);
+                spe *= f0 + (1.0-f0)*pow(fre, 5.0);
+
+                col += 0.5 * mate * vec3(0.7, 0.8, 1.1) * diffuse;
+                col +=  vec3(0.7, 0.8, 1.1) * spe;
+
+                //col = vec3(fre);
+            }
+
+            // side light
+            {
+                vec3 ligDir = normalize(vec3(0.4, 0.7, 0.1));
+                float dif = clamp( dot(nor, ligDir), 0.0, 1.0);
+                float sha = calcSoftshadow( pos, ligDir, 32.0, iTime);
+
+                col += 0.5 * mate * vec3(1.0, 0.6, 0.3) * dif * sha;
+            }
         }
-
-
         // gamma
         tot += pow(col,vec3(0.45) );
         #if AA>1
