@@ -165,6 +165,32 @@ vec4 map( in vec3 p, float time )
 
     vec4 d1 = gear(q, time, 0.0);
 
+    // X
+    {
+        vec3 qx = vec3(p.x, rotate45(p.zy));
+        if (abs(qx.y) > abs(qx.z)) qx = -qx.xzy;
+        vec4 d2 = gear(qx.xyz, time, 1.0);
+        d1 = d2.x < d1.x ? d2 : d1;
+    }
+
+    // Y
+    {
+        vec3 qy = vec3(p.y, rotate45(p.xz));
+        if (abs(qy.y) > abs(qy.z)) qy = -qy.xzy;
+        vec4 d2 = gear(qy.xyz, time, 1.0);
+        d1 = d2.x < d1.x ? d2 : d1;
+    }
+
+    // Z
+    {
+        vec3 qz = vec3(p.z, rotate45(p.yx));
+        qz = qz.xyz  * vec3(1.0, 1.0, 1.0);
+        if (abs(qz.y) > abs(qz.z)) qz = -qz.xzy;
+        vec4 d2 = gear(qz.xyz, time, 1.0);
+        d1 = d2.x < d1.x ? d2 : d1;
+    }
+
+
     return d1;
 }
 
