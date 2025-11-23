@@ -146,6 +146,8 @@ vec4 gear( in vec3 p, float time, float offset)
         d = d - min(0.0, k);
     }
 
+    // little sphere
+    d = min(d, sdSphere(p - vec3(0.0, 0.0, 0.11), 0.025));
 
     return vec4( d, p );
 }
@@ -190,6 +192,7 @@ vec4 map( in vec3 p, float time )
         d1 = d2.x < d1.x ? d2 : d1;
     }
 
+    d1 = min(d1, sdSphere(p, 0.12));
 
     return d1;
 }
