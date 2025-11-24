@@ -159,6 +159,10 @@ vec2 rotate45( in vec2 v )
 
 vec4 map( in vec3 p, float time )
 {
+    vec4 d = vec4((sdSphere(p, 0.12)), p);
+
+//    return d;
+
     vec3 q = p;
 
     if      (abs(q.x) > abs(q.y) && abs(q.x) > abs(q.z)) q = q.zyx;
@@ -166,6 +170,7 @@ vec4 map( in vec3 p, float time )
     else                                                 q = q.xyz * vec3(-1,1,1);
 
     vec4 d1 = gear(q, time, 0.0);
+    d1 = d.x < d1.x ? d : d1;
 
     // X
     {
@@ -191,8 +196,6 @@ vec4 map( in vec3 p, float time )
         vec4 d2 = gear(qz.xyz, time, 1.0);
         d1 = d2.x < d1.x ? d2 : d1;
     }
-
-    d1 = min(d1, sdSphere(p, 0.12));
 
     return d1;
 }
@@ -325,16 +328,18 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 float diffuse = 0.5 + 0.5 * nor.z;
                 diffuse *= occ;
                 vec3 ref = reflect(rd, nor);
-                vec3 spe = vec3(1.0) * smoothstep(0.5, 0.6, ref.z);
+                // Inner sphere more diffuse
+                vec3 spe = vec3(1.0) * smoothstep(-1.0+1.5*innerOcc, 0.6, ref.z);
 
                 // fresnel
-                float fre = clamp(dot(ref, nor),0.0, 1.0);
+                float fre = clamp(1.0+dot(rd, nor),0.0, 1.0);
                 spe *= f0 + (1.0-f0)*pow(fre, 5.0);
+                spe *= 4.0;
 
                 col += 0.5 * mate * vec3(0.7, 0.8, 1.1) * diffuse;
-                col +=  vec3(0.7, 0.8, 1.1) * spe;
+                col +=  vec3(0.7, 0.8, 1.1) * spe * diffuse * occ;
 
-                //col = vec3(fre);
+//                col = vec3(fre);
             }
 
             // side light
@@ -343,7 +348,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 float dif = clamp( dot(nor, ligDir), 0.0, 1.0);
                 float sha = calcSoftshadow( pos, ligDir, 32.0, iTime);
 
-                col += 0.5 * mate * vec3(1.0, 0.6, 0.3) * dif * sha;
+                vec3 hal = normalize(ligDir-rd);
+                vec3 spe = vec3(1.0)*pow(clamp(dot(hal, nor), 0.0, 1.0), 32.0);
+                spe *= f0 + (1.0-f0)*pow(1.0-clamp(dot(hal, ligDir), 0.0, 1.0), 5.0);
+
+                col += mate * vec3(1.0, 0.55, 0.3) * dif * sha;
+                col += 8.0*vec3(1.0, 0.55, 0.3) * dif * sha * spe;
             }
         }
         // gamma
@@ -354,7 +364,11 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     #endif
 
     // cheap dithering
-    tot += sin(fragCoord.x*114.0)*sin(fragCoord.y*211.1)/512.0;
+//    tot += sin(fragCoord.x*114.0)*sin(fragCoord.y*211.1)/512.0;
+
+    // SCurve
+    tot = clamp(tot, 0.0, 1.0);
+    tot = tot*tot*(3.0-2.0*tot);
 
     fragColor = vec4( tot, 1.0 );
 }
