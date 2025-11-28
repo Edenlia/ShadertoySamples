@@ -322,6 +322,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             vec3 mate = 0.22*te;
             vec3 f0 = mate;
 
+            float ks = 0.5+1.0*te.x;
+
             col = vec3(0.0);
             // top light
             {
@@ -337,7 +339,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 spe *= 4.0;
 
                 col += 0.5 * mate * vec3(0.7, 0.8, 1.1) * diffuse;
-                col +=  vec3(0.7, 0.8, 1.1) * spe * diffuse * occ;
+                col +=  ks * vec3(0.7, 0.8, 1.1) * spe * diffuse * occ;
 
 //                col = vec3(fre);
             }
@@ -353,7 +355,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 spe *= f0 + (1.0-f0)*pow(1.0-clamp(dot(hal, ligDir), 0.0, 1.0), 5.0);
 
                 col += mate * vec3(1.0, 0.55, 0.3) * dif * sha;
-                col += 8.0*vec3(1.0, 0.55, 0.3) * dif * sha * spe;
+                col += ks * 8.0*vec3(1.0, 0.55, 0.3) * dif * sha * spe;
+            }
+
+            {
+                float dif = clamp(0.5 - 0.5 * nor.z, 0.0, 1.0);
+                col += mate*dif*occ;
             }
         }
         // gamma
@@ -368,6 +375,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
     // SCurve
     tot = clamp(tot, 0.0, 1.0);
+    // Cubic smoothstep
     tot = tot*tot*(3.0-2.0*tot);
 
     fragColor = vec4( tot, 1.0 );
