@@ -305,8 +305,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         // pixel coordinates
         vec2 o = vec2(float(m),float(n)) / float(AA) - 0.5;
         vec2 p = (2.0*(fragCoord+o)-iResolution.xy)/iResolution.y;
-        float d = 0.5*sin(fragCoord.x*147.0)*sin(fragCoord.y*131.0);
-        float time = iTime - 2.5*(1.0/48.0)*(float(m*AA+n))/float(AA*AA);
+        float d = 0.5+0.5*sin(fragCoord.x*147.0)*sin(fragCoord.y*131.0);
+        float time = iTime - 2.*(1.0/48.0)*(float(m*AA+n)+d)/float(AA*AA);
         #else
         vec2 p = (2.0*fragCoord-iResolution.xy)/iResolution.y;
         float time = iTime;
@@ -404,6 +404,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     tot = clamp(tot, 0.0, 1.0);
     // Cubic smoothstep
     tot = tot*tot*(3.0-2.0*tot);
+
+//    float d = 0.5+0.5*sin(fragCoord.x*147.0)*sin(fragCoord.y*131.0);
+//    tot = vec3(d);
 
     fragColor = vec4( tot, 1.0 );
 }
