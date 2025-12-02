@@ -306,7 +306,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         vec2 o = vec2(float(m),float(n)) / float(AA) - 0.5;
         vec2 p = (2.0*(fragCoord+o)-iResolution.xy)/iResolution.y;
         float d = 0.5*sin(fragCoord.x*147.0)*sin(fragCoord.y*131.0);
-        float time = iTime;
+        float time = iTime - 2.5*(1.0/48.0)*(float(m*AA+n))/float(AA*AA);
         #else
         vec2 p = (2.0*fragCoord-iResolution.xy)/iResolution.y;
         float time = iTime;
@@ -375,7 +375,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             {
                 vec3 ligDir = normalize(vec3(0.4, 0.7, 0.1));
                 float dif = clamp( dot(nor, ligDir), 0.0, 1.0);
-                float sha = calcSoftshadow( pos, ligDir, 32.0, iTime);
+                float sha = calcSoftshadow( pos, ligDir, 32.0, time);
 
                 vec3 hal = normalize(ligDir-rd);
                 vec3 spe = vec3(1.0)*pow(clamp(dot(hal, nor), 0.0, 1.0), 32.0);
