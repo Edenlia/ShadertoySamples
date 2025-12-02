@@ -15,8 +15,22 @@
 //   Step 8: https://www.shadertoy.com/view/wdlyRr
 //   Final : https://www.shadertoy.com/view/tt2XzG
 
-#define AA 2
+#define AA 4
 #define PI 3.1415926535
+
+vec2 iSphere( in vec3 ro, in vec3 rd, in vec3 cen, in float rad)
+{
+    // roc
+    ro -= cen;
+
+    float b = dot(rd, ro);
+    float c = dot(ro, ro) - rad*rad;
+    float h = b*b-c;
+    if (h<0.0) return vec2(-1);
+
+    h = sqrt(h);
+    return vec2(-b - h, -b + h);
+}
 
 float dynamic( in float t, in float minValue, in float maxValue, in float speed)
 {
@@ -231,14 +245,19 @@ float calcSoftshadow( in vec3 ro, in vec3 rd, in float k, in float time )
 {
     float res = 1.0;
 
-    float tmax = 2.0;
-    float t    = 0.001;
-    for( int i=0; i<64; i++ )
+    vec2 vol = iSphere( ro, rd, vec3(0.0), 0.533);
+
+    if (vol.y > 0.0)
     {
-        float h = map( ro + rd*t, time ).x;
-        res = min( res, k*h/t );
-        t += clamp( h, 0.012, 0.2 );
-        if( res<0.001 || t>tmax ) break;
+        float tmax = min(2.0, vol.y);
+        float t    = max(0.001, vol.x);
+        for( int i=0; i<64; i++ )
+        {
+            float h = map( ro + rd*t, time ).x;
+            res = min( res, k*h/t );
+            t += clamp( h, 0.012, 0.2 );
+            if( res<0.001 || t>tmax ) break;
+        }
     }
 
     return clamp( res, 0.0, 1.0 );
@@ -248,13 +267,18 @@ vec4 intersect( in vec3 ro, in vec3 rd, in float time )
 {
     vec4 res = vec4(-1.0);
 
-    float t = 0.001;
-    float tmax = 5.0;
-    for( int i=0; i<128 && t<tmax; i++ )
+    vec2 vol = iSphere( ro, rd, vec3(0.0), 0.533);
+    if (vol.y > 0.0)
     {
-        vec4 h = map(ro+t*rd,time);
-        if( h.x<0.001 ) { res=vec4(t,h.yzw); break; }
-        t += h.x;
+        // raymarch
+        float t = max(vol.x, 0.0);
+        float tmax = 5.0;
+        for( int i=0; i<128 && t<vol.y; i++ )
+        {
+            vec4 h = map(ro+t*rd,time);
+            if( h.x<0.001 ) { res=vec4(t,h.yzw); break; }
+            t += h.x;
+        }
     }
 
     return res;
@@ -320,7 +344,10 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             vec3 te = 0.5*texture(iChannel0,tuvw.yz).xyz+
             0.5*texture(iChannel0,tuvw.yw).xyz;
             vec3 mate = 0.22*te;
+            float len = length(pos);
             vec3 f0 = mate;
+
+            mate = mix(mate, vec3(0.7, 0.25, 0.15), 1.0-smoothstep(0.121, 0.122, len));
 
             float ks = 0.5+1.0*te.x;
 
@@ -360,7 +387,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
             {
                 float dif = clamp(0.5 - 0.5 * nor.z, 0.0, 1.0);
-                col += mate*dif*occ;
+                col += 0.4*mate*dif*occ;
             }
         }
         // gamma
