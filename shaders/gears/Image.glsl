@@ -390,6 +390,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 col += 0.4*mate*dif*occ;
             }
         }
+
+        col *= 1.0 - 0.2*dot(p,p);
+
         // gamma
         tot += pow(col,vec3(0.45) );
         #if AA>1
@@ -404,6 +407,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     tot = clamp(tot, 0.0, 1.0);
     // Cubic smoothstep
     tot = tot*tot*(3.0-2.0*tot);
+
+    // dithering
+    tot += (1.0/512.0)*sin(fragCoord.x*147.0)*sin(fragCoord.y*131.0);
+
+//    tot = floor(tot*255.0)/255.0;
+//    tot = (abs(dFdy(tot))+abs(dFdx(tot)))*200.0;
 
 //    float d = 0.5+0.5*sin(fragCoord.x*147.0)*sin(fragCoord.y*131.0);
 //    tot = vec3(d);
