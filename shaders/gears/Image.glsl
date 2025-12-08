@@ -139,26 +139,31 @@ vec4 gear( in vec3 p, float time, float offset)
     vec3 q = p;
     q.xy = rot * q.xy;
 
-    float d = sdCube(q.xy - vec2(0.165, 0.0), vec2(0.042, 0.017)) - 0.01;
-    float d2 = sdRing(p, 0.15, 0.023);
-    d = min(d, d2); // SDF想要合并形状，用min
+    float d = 9999.9999;
+    // Cube
+//    float weight = smoothstep(0.0, 1.0,1.5*cos(time)+0.5);
+    float d_Cube = sdCube(q.xy - weight * vec2(0.165, 0.0), vec2(0.042, 0.017)) - 0.01;
+    d = min(d, d_Cube);
 
-    float d3 = sdCross(p - vec3(0.0, 0.0, 0.5), vec3(0.18, 0.005, 0.005)) - 0.002;
-    d = min(d, d3);
+    // Ring
+    float d_Ring = sdRing(p, 0.15, 0.023);
+    d = min(d, d_Ring); // SDF想要合并形状，用min
+
+    // Cross
+    float d_Cross = sdCross(p - vec3(0.0, 0.0, 0.5), vec3(0.18, 0.005, 0.005)) - 0.002;
+    d = min(d, d_Cross);
+
 
     float r = length(p);
     d = smax(d, abs(r-0.5) - 0.028, 0.005);
 
-    // stick
-    {
-        float d1 = sdCapsule(p, 0.011, 0.50);
-        d = min(d, d1);
-    }
+    // Stick
+    float d_Stick = sdCapsule(p, 0.011, 0.50);
+    d = min(d, d_Stick);
 
-    {
-        float k = sdDonut(p - vec3(0.0, 0.0, 0.508), 0.15, 0.01);
-        d = d - min(0.0, k);
-    }
+
+    float k = sdDonut(p - vec3(0.0, 0.0, 0.508), 0.15, 0.01);
+    d = d - min(0.0, k);
 
     // little sphere
     d = min(d, sdSphere(p - vec3(0.0, 0.0, 0.11), 0.025));
