@@ -119,7 +119,7 @@ vec4 gear( in vec3 p, float time, float offset)
 {
     // Rotate it!
     {
-        float an = 1.5 * time + offset * 6.283185/24.0;
+        float an = 2.1 * time + offset * 6.283185/24.0;
         an = an * sign(p.z);
         mat2 rotMat = mat2(cos(an), -sin(an), // first column
         sin(an), cos(an)); // second column
@@ -316,8 +316,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         float an = 6.2831*time/40.0;
         vec3 ta = vec3( 0.0, 0.0, 0.0 ); // target
 
+        ta += 0.009*sin(68.0*time/40.0+vec3(2.0,6.0,4.0));
+
         // use UE coordinate: (forward, right, up) -> (+X, +Y, +Z)
         vec3 ro = ta + vec3( 1.5*cos(an), 1.5*sin(an), 0.6 ); // camera root
+
+        ro += 0.005*sin(92.0*time/40.0+vec3(0.0,3.0,1.0));
 
         // camera-to-world transformation
         mat3 ca = setCamera( ro, ta, 0.0 );
