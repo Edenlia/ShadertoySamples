@@ -141,12 +141,13 @@ vec4 gear( in vec3 p, float time, float offset)
 
     float d = 9999.9999;
     // Cube
-//    float weight = smoothstep(0.0, 1.0,1.5*cos(time)+0.5);
-    float d_Cube = sdCube(q.xy - weight * vec2(0.165, 0.0), vec2(0.042, 0.017)) - 0.01;
+    float w_Cube = smoothstep(0.0, 1.0,4*cos(time)+0.5);
+    float d_Cube = sdCube(q.xy - vec2(0.165, 0.0), w_Cube * vec2(0.042, 0.017)) - w_Cube * 0.01;
     d = min(d, d_Cube);
 
     // Ring
-    float d_Ring = sdRing(p, 0.15, 0.023);
+    float w_Ring = smoothstep(0.0, 1.0,4*cos(time+0.2)+0.5);
+    float d_Ring = sdRing(p, 0.15 * w_Ring, 0.023);
     d = min(d, d_Ring); // SDF想要合并形状，用min
 
     // Cross
