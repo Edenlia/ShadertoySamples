@@ -7,8 +7,20 @@ projects:
   name: Gears
   path: shaders/gears
 - channel0Texture: null
-  channel1Texture: null
+  channel1Texture: $plugin/resources/textures/T_RustyMetal.jpg
   channel2Texture: null
   channel3Texture: null
   name: test
   path: shaders/test
+- channel0Texture: null
+  channel1Texture: null
+  channel2Texture: null
+  channel3Texture: null
+  name: Rope
+  path: shaders/rope
+- channel0Texture: null
+  channel1Texture: null
+  channel2Texture: null
+  channel3Texture: null
+  name: 3d_SDF
+  path: shaders/3d_sdf
