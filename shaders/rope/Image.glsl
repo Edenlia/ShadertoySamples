@@ -4,7 +4,7 @@ mat3 lookRotation(vec3 forward, vec3 top) {
     vec3 f = normalize(forward);
     vec3 r = normalize(cross(top, f));
     vec3 u = cross(f, r);
-    return mat3(r, u, f); // 列主序
+    return mat3(f, r, u); // Column major
 }
 
 
@@ -26,7 +26,7 @@ float sdCube( in vec3 p, in vec3 r )
 // l: length
 float sdCapsule( in vec3 p, in float r, in float l)
 {
-    p.z = max(abs(p.z) - (r+l), 0.0);
+    p.x = max(abs(p.x) - (l), 0.0);
     return length(p)-r;
 }
 
@@ -56,11 +56,18 @@ float sdRing( in vec3 p, in float r, in float t)
     return abs(length(p.xy) - r) - t;
 }
 
+float smin( float a, float b, float k )
+{
+    k *= 2.0;
+    float x = b-a;
+    return 0.5*( a+b-sqrt(x*x+k*k) );
+}
+
 vec4 map( in vec3 p, float time )
 {
-    vec3 p1 = vec3(0.0, -0.01, 0.0);
-    vec3 p2 = vec3(0.0, 0.0, 0.15);
-    vec3 p3 = vec3(0.0, 0.1, -0.2);
+    vec3 p1 = vec3(0.02, -0.08, 0.2);
+    vec3 p2 = vec3(0.0, 0.0, 0.0);
+    vec3 p3 = vec3(0.0, 0.2, -0.1);
 
     vec3 c1 = (p1 + p2) / 2.0;
     vec3 c2 = (p2 + p3) / 2.0;
@@ -68,12 +75,30 @@ vec4 map( in vec3 p, float time )
     float l1 = length(p1-p2);
     float l2 = length(p2-p3);
 
-    float d1 = sdCapsule( p-c1, 0.01, l1 );
-    float d2 = sdCapsule( p-c2, 0.01, l2 );
+    float d1 = sdCapsule( (p-c1)*lookRotation(p1-p2,vec3(0,0,1)), 0.01, l1/2 );
+    float d2 = sdCapsule( (p-c2)*lookRotation(p2-p3,vec3(0,0,1)), 0.01, l2/2 );
 
-    float d = min(d1, d2);
+    float d = smin(d1, d2, 0.001);
+//    float d = d2;
 
-//    d = sdCapsule( p, 0.01, 0.01);
+    float s = 0.005;
+    float gridSize = 0.05;
+
+    int num = 3;
+
+    for (int x = -num; x <= num; x++) {
+        for (int y = -num; y <= num; y++) {
+            vec3 offset = vec3(
+            float(x) * gridSize,
+            float(y) * gridSize,
+            0.0
+            );
+            d = min(d, sdSphere(p - offset, s));
+        }
+    }
+
+
+    //    d = sdCapsule( p, 0.01, 0.01);
     return vec4( d, p );
 }
 

@@ -26,7 +26,7 @@ float sdCube( in vec3 p, in vec3 r )
 // l: length
 float sdCapsule( in vec3 p, in float r, in float l)
 {
-    p.z = max(abs(p.z) - (r+l), 0.0);
+    p.z = max(abs(p.z) - l, 0.0);
     return length(p)-r;
 }
 
